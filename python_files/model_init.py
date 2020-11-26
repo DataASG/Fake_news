@@ -8,9 +8,9 @@ import pandas as pd
 import numpy as np
 
 import nltk
-nltk.download('punkt')
-nltk.download('stopwords')
-nltk.download('wordnet')
+# # nltk.download('punkt')
+# # nltk.download('stopwords')
+# # nltk.download('wordnet')
 
 from gensim.models import Word2Vec
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -27,9 +27,8 @@ from tensorflow.keras.callbacks import EarlyStopping
 # Data collection
 def get_data(sample_size):
 
-    df = pd.read_csv('../raw_data/wagon_data/data.csv')
+    df = pd.read_csv('./raw_data/data.csv')
     df_sample = df.sample(frac=sample_size, random_state=3)
-    df_sample.to_csv('df_sample.csv', index=False)
     df_sample = df_sample.reset_index(drop=True)
     return df_sample
 
@@ -105,24 +104,28 @@ def init_model():
     return model
 
 
+if __name__ == "__main__":
+    print("Im here")
+    df_sample = get_data(0.005 )
+    y = df_sample['label']
 
-df_sample = get_data(0.02)
-y = df_sample['label']
+    df_sample_text_list = cleaning_text(df_sample)
 
-df_sample_text_list = cleaning_text(df_sample)
+    X_train, X_test, y_train, y_test = train_test_split(
+        df_sample_text_list, y, test_size=0.3, random_state=0)
 
-X_train, X_test, y_train, y_test = train_test_split(
-    df_sample_text_list, y, test_size=0.3, random_state=0)
-
-word2vec = Word2Vec(sentences=X_train, size=60, min_count=10, window=10)
-X_train_pad = embedding_pipeline(word2vec, X_train)
-X_test_pad = embedding_pipeline(word2vec, X_test)
-
-model = init_model()
-es = EarlyStopping(patience=5, restore_best_weights=True)
-fitted_model = model.fit(X_train_pad, y_train,
-                         batch_size=16,
-                         epochs=5, validation_split=0.1,
-                         callbacks = [es])
-
-model.evaluate(X_test_pad, y_test)
+    print('data split')
+    word2vec = Word2Vec(sentences=X_train, size=60, min_count=10, window=10)
+    X_train_pad = embedding_pipeline(word2vec, X_train)
+    X_test_pad = embedding_pipeline(word2vec, X_test)
+    print('preprocess done')
+    model = init_model()
+    print('about to fit')
+    es = EarlyStopping(patience=5, restore_best_weights=True)
+    fitted_model = model.fit(X_train_pad, y_train,
+                             batch_size=16,
+                             epochs=5, validation_split=0.1,
+                             callbacks = [es])
+    print('model fitted')
+    model.evaluate(X_test_pad, y_test)
+    print('flow completed')
