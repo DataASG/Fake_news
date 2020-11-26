@@ -7,9 +7,10 @@ requirements = [x.strip() for x in content if 'git+' not in x]
 
 setup(name='Fake_news',
       version="1.0",
+      install_requires=requirements,
       description="Project Description",
       packages=find_packages(),
-      test_suite = 'tests',
+      test_suite='tests',
       # include_package_data: to install data from MANIFEST.in
       include_package_data=True,
       scripts=['scripts/Fake_news-run'],
