@@ -3,16 +3,16 @@ from Fake_news.clean import cleaned_data
 from Fake_news.trainer import Trainer
 
 
-default_params = {
-    sample_size = 0.005,
-    local = False,
-    batch_size = 16,
-    epochs = 5,
-    validation_split = 0.1,
-    patience = 10,
-    verbose = 0,
-    test_size = 0.3
-}
+# default_params = {
+#     'sample_size' : 0.005,
+#     'local' : False,
+#     'batch_size' : 16,
+#     'epochs' : 5,
+#     'validation_split' : 0.1,
+#     'patience' : 10,
+#     'verbose' : 0,
+#     'test_size' : 0.3
+# }
 
 
 
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     # Step 2 1/2 ---> Split the model in X and y
     # Step 3 ---> Calling the trainer class
     print('calling trainer Class')
-    t = Trainer(X=X, y=y, **default_params)
+    t = Trainer(X=X, y=y)
     del X,y
     print('starting to train model')
     t.train()
