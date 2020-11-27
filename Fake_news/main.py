@@ -25,8 +25,8 @@ if __name__ == '__main__':
 
     # Step 5 ---> Evaluate the model
 
-    evaluate = model.evaluate(X_test_pad, y_test, model=fitted_model)
-
+    evaluate = fitted_model.evaluate(X_test_pad, y_test)
+    # print(evaluate)
     # Step 6 ---> Save the model
 
     # fitted_model.save()
