@@ -1,7 +1,9 @@
 from Fake_news.data import get_data
 
+import tensorflow as tf
 import numpy as np
 from gensim.models import Word2Vec
+
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.layers import Bidirectional
@@ -12,7 +14,7 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Bidirectional
 from tensorflow.keras.layers import LSTM
 from tensorflow.keras.callbacks import EarlyStopping
-
+from memoized_property import memoized_property
 # Mlflow wagon server
 MLFLOW_URI = "https://mlflow.lewagon.co/"
 # class Trainer(object):
@@ -37,6 +39,9 @@ class Trainer(object):
         self.patience= kwargs.get('patience', 10)
         self.verbose = kwargs.get('verbose', 0)
         self.test_size=kwargs.get('test_size', 0.3)
+        self.mlflow = kwargs.get("mlflow", False)  # if True log info to nlflow
+        self.upload = kwargs.get("upload", False)  # if True log info to nlflow
+        self.experiment_name =  'fake_news_model-1.1'
         self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(
                  self.X_df, self.y_df, random_state=3, test_size=self.test_size)
 
@@ -117,7 +122,13 @@ class Trainer(object):
         self.X_val_pad = embedding_pipeline(word2vec, self.X_val)
         # X_train_pad, self.X_val_pad = word_2_vec(self.X_train, self.X_val)
         #initialising the model and the EarlyStopping
-        model = init_model()
+        strategy = tf.distribute.MirroredStrategy()
+
+        # Open a strategy scope.
+        with strategy.scope():
+            # Everything that creates variables should be under the strategy scope.
+            # In general this is only model construction & `compile()`.
+            model = init_model()
         es = EarlyStopping(patience=self.patience, restore_best_weights=True)
         #fitting the model to X_train
         print('starting to train')
@@ -135,10 +146,9 @@ class Trainer(object):
         # y_pred = fitted_model.predict(self.X_test_pad)
         # Returning the accuracy score of the model on the test sets
         accuracy_score = fitted_model.evaluate(self.X_val_pad, self.y_val)
+        self.mlflow_log_param('model' , 'Bidirectional-LSTM')
+        self.mlflow_log_metric('accuracy' ,accuracy_score[1])
         return accuracy_score[1]
-
-
-
 
     def save_model(self):
         joblib.dump(self.history, 'model.joblib')
@@ -147,7 +157,27 @@ class Trainer(object):
     #     y_pred = self.history.predict(X_val)#
     #     return y_pred
 
+    @memoized_property
+    def mlflow_client(self):
+        mlflow.set_tracking_uri(MLFLOW_URI)
+        return MlflowClient()
 
+    @memoized_property
+    def mlflow_experiment_id(self):
+        try:
+            return self.mlflow_client.create_experiment(self.experiment_name)
+        except BaseException:
+            return self.mlflow_client.get_experiment_by_name(self.experiment_name).experiment_id
+
+    @memoized_property
+    def mlflow_run(self):
+        return self.mlflow_client.create_run(self.mlflow_experiment_id)
+
+    def mlflow_log_param(self, key, value):
+        self.mlflow_client.log_param(self.mlflow_run.info.run_id, key, value)
+
+    def mlflow_log_metric(self, key, value):
+        self.mlflow_client.log_metric(self.mlflow_run.info.run_id, key, value)
 
     # def train(X_train_pad, y_train):
     #     model = init_model()

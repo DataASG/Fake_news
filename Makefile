@@ -72,7 +72,7 @@ FILENAME=main
 RUNTIME_VERSION=2.1
 JOB_NAME=fake_news_training_pipeline_$(shell date +'%Y%m%d_%H%M%S')
 ##### Machine Type - - - - - - - - - - - - - - - - - - - - - - - - -
-MACHINE_TYPE=n1-highmem-16
+MACHINE_TYPE=complex_model_l_gpu
 
 gcp_submit_training:
 	gcloud ai-platform jobs submit training ${JOB_NAME} \
