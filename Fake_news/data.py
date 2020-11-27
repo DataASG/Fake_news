@@ -3,9 +3,9 @@ from google.cloud import storage
 # from Fake_news.params import #
 
 
-def get_data(local=False, sample_size=0.01):
+def get_data(local=False, sample_size=0.0005):
     if local:
-        path = '~/Documents/wagon_data/data.csv'
+        path = 'raw_data/data.csv'
     else:
         path = 'gs://fakenews475/data/data.csv'
 
