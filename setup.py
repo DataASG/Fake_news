@@ -1,13 +1,44 @@
 from setuptools import find_packages
 from setuptools import setup
 
-with open('requirements.txt') as f:
-    content = f.readlines()
-requirements = [x.strip() for x in content if 'git+' not in x]
+REQUIRED_PACKAGES = [
+    'gcsfs',
+    'pandas',
+    'scikit-learn',
+    'google-cloud-storage',
+    'pygeohash',
+    'category_encoders',
+    'mlflow',
+    'joblib',
+    'numpy',
+    'psutil',
+    'pygeohash',
+    'termcolor',
+    'xgboost',
+    'memoized-property',
+    'scipy',
+    'category_encoders',
+    'six',
+    'pip',
+    'setuptools',
+    'wheel',
+      'pandas',
+      'pytest',
+      'coverage',
+      'flake8',
+      'black',
+      'yapf',
+      'python-gitlab',
+      'twine',
+      'gensim',
+      'tensorflow',
+      'nltk',
+      'sklearn']
+
 
 setup(name='Fake_news',
       version="1.0",
-      install_requires=requirements,
+      install_requires=REQUIRED_PACKAGES,
       description="Project Description",
       packages=find_packages(),
       test_suite='tests',

@@ -77,9 +77,9 @@ def train(X_train_pad, y_train):
     # Attach ML flow
 
 
-def evaluate(X_test_pad, y_test, model):
-    evaluate = model.evaluate(X_test_pad, y_test)
-    return evaluate
+# def evaluate(X_test_pad, y_test, model):
+#     evaluate = model.evaluate(X_test_pad, y_test)
+#     return evaluate
     # Attach ML flow
 
 # def save():

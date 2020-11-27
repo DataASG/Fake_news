@@ -60,6 +60,9 @@ pypi:
 	@twine upload dist/* -u lologibus2
 
 
+
+##### Machine Type - - - - - - - - - - - - - - - - - - - - - - - - -
+MACHINE_TYPE=n1-highmem-16
 BUCKET_NAME=fakenews475
 BUCKET_TRAINING_FOLDER=trainings
 REGION=europe-west1
@@ -70,6 +73,7 @@ RUNTIME_VERSION=2.1
 JOB_NAME=fake_news_training_pipeline_$(shell date +'%Y%m%d_%H%M%S')
 ##### Machine Type - - - - - - - - - - - - - - - - - - - - - - - - -
 MACHINE_TYPE=n1-highmem-16
+
 gcp_submit_training:
 	gcloud ai-platform jobs submit training ${JOB_NAME} \
 		--job-dir gs://${BUCKET_NAME}/${BUCKET_TRAINING_FOLDER} \
@@ -80,5 +84,8 @@ gcp_submit_training:
 		--region ${REGION} \
 		--scale-tier CUSTOM \
 		--master-machine-type ${MACHINE_TYPE}
+
+
+
 run_locally:
 	@python -m ${PACKAGE_NAME}.${FILENAME}
