@@ -110,8 +110,8 @@ class Trainer(object):
         def init_model():
             model = Sequential()
             model.add(layers.Masking())
-            model.add(Bidirectional(LSTM(16)))
-            model.add(Dense(8, activation='tanh'))
+            model.add(Bidirectional(LSTM(256)))
+            model.add(Dense(128, activation='tanh'))
             model.add(Dense(1, activation='sigmoid'))
             model.compile(optimizer='rmsprop',
                           loss='binary_crossentropy', metrics=['accuracy'])
@@ -124,13 +124,13 @@ class Trainer(object):
         #initialising the model and the EarlyStopping
         strategy = tf.distribute.MirroredStrategy()
 
-        # Open a strategy scope.
+        # # Open a strategy scope.
         with strategy.scope():
             # Everything that creates variables should be under the strategy scope.
-            # In general this is only model construction & `compile()`.
+                # In general this is only model construction & `compile()`.
             self.model = init_model()
         es = EarlyStopping(patience=self.patience, restore_best_weights=True)
-        #fitting the model to X_train
+                #fitting the model to X_train
         print('starting to train')
         self.history = self.model.fit(self.X_train_pad, self.y_train,
                                     batch_size=self.batch_size,
@@ -141,14 +141,14 @@ class Trainer(object):
 
 
 
-    def evaluate(self):
-        # compute_score(self.X_val, self.y_val)
-        # y_pred = fitted_model.predict(self.X_test_pad)
-        # Returning the accuracy score of the model on the test sets
-        accuracy_score = self.model.evaluate(self.X_val_pad, self.y_val)
-        self.mlflow_log_param('model' , 'Bidirectional-LSTM')
-        self.mlflow_log_metric('accuracy' ,accuracy_score[1])
-        return accuracy_score[1]
+    # def evaluate(self):
+    #     # compute_score(self.X_val, self.y_val)
+    #     # y_pred = fitted_model.predict(self.X_test_pad)
+    #     # Returning the accuracy score of the model on the test sets
+    #     accuracy_score = self.model.evaluate(self.X_val_pad, self.y_val)
+    #     self.mlflow_log_param('model' , 'Bidirectional-LSTM')
+    #     self.mlflow_log_metric('accuracy' ,accuracy_score[1])
+    #     return accuracy_score[1]
 
     def save_model(self):
         joblib.dump(self.history, 'model.joblib')
@@ -174,7 +174,7 @@ class Trainer(object):
         return self.mlflow_client.create_run(self.mlflow_experiment_id)
 
     def mlflow_log_param(self, key, value):
-        self.mlflow_log_metriclient.log_param(self.mlflow_run.info.run_id, key, value)
+        self.mlflow_client.log_param(self.mlflow_run.info.run_id, key, value)
 
     def mlflow_log_metric(self, key, value):
         self.mlflow_client.log_metric(self.mlflow_run.info.run_id, key, value)
