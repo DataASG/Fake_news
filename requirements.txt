@@ -9,3 +9,7 @@ black
 yapf
 python-gitlab
 twine
+gensim
+tensorflow
+nltk
+sklearn
