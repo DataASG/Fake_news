@@ -2,6 +2,8 @@ from Fake_news.data import get_data
 
 import tensorflow as tf
 import numpy as np
+import mlflow
+from  mlflow.tracking import MlflowClient
 from gensim.models import Word2Vec
 
 from sklearn.model_selection import train_test_split
@@ -122,13 +124,13 @@ class Trainer(object):
         self.X_val_pad = embedding_pipeline(word2vec, self.X_val)
         # X_train_pad, self.X_val_pad = word_2_vec(self.X_train, self.X_val)
         #initialising the model and the EarlyStopping
-        strategy = tf.distribute.MirroredStrategy()
+        # strategy = tf.distribute.MirroredStrategy()
 
         # Open a strategy scope.
-        with strategy.scope():
+        # with strategy.scope():
             # Everything that creates variables should be under the strategy scope.
             # In general this is only model construction & `compile()`.
-            self.model = init_model()
+        self.model = init_model()
         es = EarlyStopping(patience=self.patience, restore_best_weights=True)
         #fitting the model to X_train
         print('starting to train')
@@ -174,7 +176,7 @@ class Trainer(object):
         return self.mlflow_client.create_run(self.mlflow_experiment_id)
 
     def mlflow_log_param(self, key, value):
-        self.mlflow_log_metriclient.log_param(self.mlflow_run.info.run_id, key, value)
+        self.mlflow_client.log_param(self.mlflow_run.info.run_id, key, value)
 
     def mlflow_log_metric(self, key, value):
         self.mlflow_client.log_metric(self.mlflow_run.info.run_id, key, value)
