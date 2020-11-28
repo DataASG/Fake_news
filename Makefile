@@ -70,7 +70,11 @@ PYTHON_VERSION=3.7
 PACKAGE_NAME=Fake_news
 FILENAME=main
 RUNTIME_VERSION=2.1
+<<<<<<< HEAD
 JOB_NAME=fake_news_training_pipeline_mlflow_fix$(shell date +'%Y%m%d_%H%M%S')
+=======
+JOB_NAME=fake_news_training_pipeline_no_gpu_$(shell date +'%Y%m%d_%H%M%S')
+>>>>>>> 938a507bbe74ed06689d5f11c575d2794fb3316f
 ##### Machine Type - - - - - - - - - - - - - - - - - - - - - - - - -
 MACHINE_TYPE=complex_model_l_gpu
 
