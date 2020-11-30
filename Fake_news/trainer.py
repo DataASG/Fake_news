@@ -115,7 +115,7 @@ class Trainer(object):
             model.add(Bidirectional(LSTM(256)))
             model.add(Dense(128, activation='tanh'))
             model.add(Dense(1, activation='sigmoid'))
-            model.compile(optimizer='rmsprop',
+            model.compile(optimizer='adam', #was rmsprop
                           loss='binary_crossentropy', metrics=['accuracy'])
             return model
         #Embedding and vectorising X_train and X_val
