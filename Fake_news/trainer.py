@@ -36,15 +36,14 @@ class Trainer(object):
         self.batch_size = kwargs.get("batch_size", 16)
         self.epochs = kwargs.get('epochs', 5)
         self.validation_split = kwargs.get('validation_split', 0.1)
-        self.patience= kwargs.get('patience', 10)
+        self.patience = kwargs.get('patience', 10)
         self.verbose = kwargs.get('verbose', 0)
-        self.test_size=kwargs.get('test_size', 0.3)
+        self.test_size = kwargs.get('test_size', 0.3)
         self.mlflow = kwargs.get("mlflow", False)  # if True log info to nlflow
         self.upload = kwargs.get("upload", False)  # if True log info to nlflow
-        self.experiment_name =  'fake_news_model-1.1'
+        self.experiment_name = 'fake_news_model-1.1'
         self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(
-                 self.X_df, self.y_df, random_state=3, test_size=self.test_size)
-
+            self.X_df, self.y_df, random_state=3, test_size=self.test_size)
 
     # def embed_sentence(self, word2vec, sentence):
     #     embedded_sentence = []
@@ -53,7 +52,6 @@ class Trainer(object):
     #             embedded_sentence.append(word2vec.wv[word])
     #     return np.array(embedded_sentence)
 
-
     # def embedding(self, word2vec, sentences):
     #     embed = []
     #     for sentence in sentences:
@@ -61,19 +59,14 @@ class Trainer(object):
     #         embed.append(embedded_sentence)
     #     return embed
 
-
     # def embedding_pipeline(self, word2vec, X):
     #     X = embedding(word2vec, X)
     #     X = pad_sequences(X, dtype='float32', padding='post')
     #     return X
 
-
     # def word_2_vec(self, X_train, X_test):
 
-
     #     return X_train_pad, X_test_pad
-
-
 
     # def init_model():
     #     model = Sequential()
@@ -84,8 +77,6 @@ class Trainer(object):
     #     model.compile(optimizer='rmsprop',
     #                   loss='binary_crossentropy', metrics=['accuracy'])
     #     return model
-
-
 
     def train(self):
         def embed_sentence(word2vec, sentence):
@@ -116,12 +107,13 @@ class Trainer(object):
             model.compile(optimizer='rmsprop',
                           loss='binary_crossentropy', metrics=['accuracy'])
             return model
-        #Embedding and vectorising X_train and X_val
-        word2vec = Word2Vec(sentences=self.X_train, size=60, min_count=10, window=10)
+        # Embedding and vectorising X_train and X_val
+        word2vec = Word2Vec(sentences=self.X_train,
+                            size=60, min_count=10, window=10)
         self.X_train_pad = embedding_pipeline(word2vec, self.X_train)
         self.X_val_pad = embedding_pipeline(word2vec, self.X_val)
         # X_train_pad, self.X_val_pad = word_2_vec(self.X_train, self.X_val)
-        #initialising the model and the EarlyStopping
+        # initialising the model and the EarlyStopping
         strategy = tf.distribute.MirroredStrategy()
 
         # Open a strategy scope.
@@ -130,24 +122,22 @@ class Trainer(object):
             # In general this is only model construction & `compile()`.
             model = init_model()
         es = EarlyStopping(patience=self.patience, restore_best_weights=True)
-        #fitting the model to X_train
+        # fitting the model to X_train
         print('starting to train')
         self.history = model.fit(self.X_train_pad, self.y_train,
-                                    batch_size=self.batch_size,
-                                    epochs=self.epochs,
-                                    validation_split=self.validation_split,
-                                    verbose=self.verbose,
-                                    callbacks=[es])
-
-
+                                 batch_size=self.batch_size,
+                                 epochs=self.epochs,
+                                 validation_split=self.validation_split,
+                                 verbose=self.verbose,
+                                 callbacks=[es])
 
     def evaluate(self):
         # compute_score(self.X_val, self.y_val)
         # y_pred = fitted_model.predict(self.X_test_pad)
         # Returning the accuracy score of the model on the test sets
-        accuracy_score = fitted_model.evaluate(self.X_val_pad, self.y_val)
-        self.mlflow_log_param('model' , 'Bidirectional-LSTM')
-        self.mlflow_log_metric('accuracy' ,accuracy_score[1])
+        accuracy_score = self.history.evaluate(self.X_val_pad, self.y_val)
+        self.mlflow_log_param('model', 'Bidirectional-LSTM')
+        self.mlflow_log_metric('accuracy', accuracy_score[1])
         return accuracy_score[1]
 
     def save_model(self):
@@ -189,11 +179,6 @@ class Trainer(object):
 
     #     return fitted_model
 
-
-
-
-
-
     # Attach ML flow
 
 
@@ -201,5 +186,3 @@ class Trainer(object):
 #     evaluate = model.evaluate(X_test_pad, y_test)
 #     return evaluate
     # Attach ML flow
-
-

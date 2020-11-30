@@ -9,7 +9,7 @@ def get_data(local=False, sample_size=0.0005):
     else:
         path = 'gs://fakenews475/data/data.csv'
 
-    df = pd.read_csv(path)
+    df = pd.read_csv(path, nrows=10000)
     df_sample = df.sample(frac=sample_size, random_state=3)
     # df_sample.to_csv('df_sample.csv', index=False)
     df_sample = df_sample.reset_index(drop=True)
