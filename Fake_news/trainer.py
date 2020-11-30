@@ -112,10 +112,11 @@ class Trainer(object):
         def init_model():
             model = Sequential()
             model.add(layers.Masking())
-            model.add(Bidirectional(LSTM(16)))
-            model.add(Dense(8, activation='tanh'))
+            model.add(Bidirectional(LSTM(256)))
+            model.add(Dense(128, activation='tanh'))
+           # model.add(Dense(10, activation='tanh')) # newly added
             model.add(Dense(1, activation='sigmoid'))
-            model.compile(optimizer='rmsprop',
+            model.compile(optimizer='adam', #was rmsprop
                           loss='binary_crossentropy', metrics=['accuracy'])
             return model
         #Embedding and vectorising X_train and X_val
