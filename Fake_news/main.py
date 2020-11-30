@@ -22,7 +22,7 @@ if __name__ == '__main__':
     # Step 0 ---> Set params
     # Step 1 ---> Get Data
     print('getting data')
-    df = get_data(local=False, sample_size=0.005)
+    df = get_data(local=False, sample_size=1)
     y = df.pop('label')
     # Step 2 ---> Clean Data
     print('cleaning_data')

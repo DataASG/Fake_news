@@ -36,8 +36,8 @@ class Trainer(object):
         self.y_df = y
         self.kwargs = kwargs
         self.batch_size = kwargs.get("batch_size", 16)
-        self.epochs = kwargs.get('epochs', 5)
-        self.validation_split = kwargs.get('validation_split', 0.1)
+        self.epochs = kwargs.get('epochs', 50)
+        self.validation_split = kwargs.get('validation_split', 0.2)
         self.patience= kwargs.get('patience', 10)
         self.verbose = kwargs.get('verbose', 0)
         self.test_size=kwargs.get('test_size', 0.3)
@@ -112,8 +112,8 @@ class Trainer(object):
         def init_model():
             model = Sequential()
             model.add(layers.Masking())
-            model.add(Bidirectional(LSTM(16)))
-            model.add(Dense(8, activation='tanh'))
+            model.add(Bidirectional(LSTM(256)))
+            model.add(Dense(128, activation='tanh'))
             model.add(Dense(1, activation='sigmoid'))
             model.compile(optimizer='rmsprop',
                           loss='binary_crossentropy', metrics=['accuracy'])
