@@ -3,6 +3,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
 import pandas as pd
 import numpy as np
@@ -46,46 +47,16 @@ def cleaned_data(df_sample):
     df_sample_text_joined = df_sample_text.apply(lambda x: " ".join(x))
     df_sample_title_joined = df_sample_title.apply(lambda x: " ".join(x))
 
-    X = pd.concat([df_sample_title_joined, df_sample_text_joined], axis=1)
-    total_text = X['title'] + ' ' + X['text']
+    # X = pd.concat([df_sample_title_joined, df_sample_text_joined], axis=1)
+    # total_text = X['title'] + ' ' + X['text']
 
-    df_sample_text_list = total_text.to_list()
+    # df_sample_text_list = total_text()
 
-    return df_sample_text_list
+    return df_sample_text_joined, df_sample_title_joined
 
-# Model Ini
-
-
-# def init_model():
-
-#     model = Sequential()
-#     model.add(layers.Masking())
-#     model.add(Bidirectional(LSTM(256)))
-#     model.add(Dense(128, activation='tanh'))
-#     model.add(Dense(1, activation='sigmoid'))
-#     model.compile(optimizer='rmsprop',
-#                   loss='binary_crossentropy', metrics=['accuracy'])
-#     return model
-
-
-# df_sample = get_data(0.02)
-
-# df_sample_text_list = cleaning_text(df_sample)
-
-# y = df_sample['label']
-
-# X_train, X_test, y_train, y_test = train_test_split(
-#     df_sample_text_list, y, test_size=0.3, random_state=0)
-
-# word2vec = Word2Vec(sentences=X_train, size=60, min_count=10, window=10)
-# X_train_pad = embedding_pipeline(word2vec, X_train)
-# X_test_pad = embedding_pipeline(word2vec, X_test)
-
-# model = init_model()
-# es = EarlyStopping(patience=5, restore_best_weights=True)
-# fitted_model = model.fit(X_train_pad, y_train,
-#                          batch_size=16,
-#                          epochs=5, validation_split=0.1,
-#                          callbacks=[es])
-
-# model.evaluate(X_test_pad, y_test)
+def vectoriser(df_text, df_title):
+    tfidf_vec = TfidfVectorizer(max_features=10000, ngram_range=(1,3))
+    df_text = tfidf_vec.fit_transform(df_text).toarray()
+    df_title = tfidf_vec.fit_transform(df_title).toarray()
+    X_vec = np.hstack((df_title, df_text))
+    return X_vec
