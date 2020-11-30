@@ -2,19 +2,19 @@ from Fake_news.data import get_data
 
 import tensorflow as tf
 import numpy as np
+import joblib
+import mlflow
+from  mlflow.tracking import MlflowClient
 from gensim.models import Word2Vec
-
-from sklearn.model_selection import train_test_split
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.layers import Bidirectional
-from tensorflow.keras import layers
-from tensorflow.keras.layers import Embedding
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.layers import Bidirectional
-from tensorflow.keras.layers import LSTM
+from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from sklearn.linear_model import Lasso, Ridge, LinearRegression, PassiveAggressiveClassifier
+from sklearn.model_selection import train_test_split, cross_validate, GridSearchCV
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, HashingVectorizer
+from sklearn import metrics
 from tensorflow.keras.callbacks import EarlyStopping
 from memoized_property import memoized_property
+from xgboost import XGBRegressor
 # Mlflow wagon server
 MLFLOW_URI = "https://mlflow.lewagon.co/"
 # class Trainer(object):
@@ -26,7 +26,6 @@ MLFLOW_URI = "https://mlflow.lewagon.co/"
 # def convert_sentences(X):
 #     return [sentence.split(' ') for sentence in X]
 class Trainer(object):
-    ESTIMATOR = 'Bidirectional'
     EXPERIMENT_NAME = 'fake_news_model'
 
     def __init__(self, X, y, **kwargs):
@@ -34,6 +33,7 @@ class Trainer(object):
         self.y_df = y
         self.kwargs = kwargs
         self.batch_size = kwargs.get("batch_size", 16)
+<<<<<<< HEAD
         self.epochs = kwargs.get('epochs', 5)
         self.validation_split = kwargs.get('validation_split', 0.1)
         self.patience = kwargs.get('patience', 10)
@@ -42,9 +42,18 @@ class Trainer(object):
         self.mlflow = kwargs.get("mlflow", False)  # if True log info to nlflow
         self.upload = kwargs.get("upload", False)  # if True log info to nlflow
         self.experiment_name = 'fake_news_model-1.1'
+=======
+        self.epochs = kwargs.get('epochs', 50)
+        self.mlflow = kwargs.get("mlflow", False)  # if True log info to nlflow
+        self.upload = kwargs.get("upload", False)  # if True log info to nlflow
+        self.max_iter = kwargs.get("max_iter", 50)
+        self.test_size = kwargs.get('test_size', 0.3)
+        self.experiment_name =  'fake_news_model_ML-1.1'
+>>>>>>> 4c9944d5a6bff4d2a821307e3d44fff3b4f47bc1
         self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(
             self.X_df, self.y_df, random_state=3, test_size=self.test_size)
 
+<<<<<<< HEAD
     # def embed_sentence(self, word2vec, sentence):
     #     embedded_sentence = []
     #     for word in sentence:
@@ -77,8 +86,45 @@ class Trainer(object):
     #     model.compile(optimizer='rmsprop',
     #                   loss='binary_crossentropy', metrics=['accuracy'])
     #     return model
+=======
+    def get_estimator(self):
+        estimator = self.kwargs.get("estimator", 'PassiveAggressive')
+        if estimator == "Lasso":
+            model = Lasso()
+        elif estimator == "Ridge":
+            model = Ridge()
+        elif estimator == "Linear":
+            model = LinearRegression()
+        elif estimator == "GBM":
+            model = GradientBoostingRegressor()
+        elif estimator == "RandomForest":
+            model = RandomForestRegressor()
+            self.model_params = {  # 'n_estimators': [int(x) for x in np.linspace(start = 50, stop = 200, num = 10)],
+                'max_features': ['auto', 'sqrt']}
+            # 'max_depth' : [int(x) for x in np.linspace(10, 110, num = 11)]}
+        elif estimator == 'PassiveAggressive':
+            model = PassiveAggressiveClassifier(max_iter=self.max_iter)
+        elif estimator == "xgboost":
+            model = XGBRegressor(objective='reg:squarederror', n_jobs=-1, max_depth=10, learning_rate=0.05,
+                                 gamma=3)
+        else:
+            model = Lasso()
+        estimator_params = self.kwargs.get("estimator_params", {})
+        self.mlflow_log_param("estimator", estimator)
+        model.set_params(**estimator_params)
+        return model
+
+
+# Vectorising function
+
+
+# instantiate + fit model
+
+# save model
+>>>>>>> 4c9944d5a6bff4d2a821307e3d44fff3b4f47bc1
 
     def train(self):
+<<<<<<< HEAD
         def embed_sentence(word2vec, sentence):
             embedded_sentence = []
             for word in sentence:
@@ -130,15 +176,33 @@ class Trainer(object):
                                  validation_split=self.validation_split,
                                  verbose=self.verbose,
                                  callbacks=[es])
+=======
+        self.model = self.get_estimator()
+
+        #fitting the model to X_train
+        print('starting to train')
+        self.history = self.model.fit(self.X_train, self.y_train
+                                    )
+
+
+>>>>>>> 4c9944d5a6bff4d2a821307e3d44fff3b4f47bc1
 
     def evaluate(self):
         # compute_score(self.X_val, self.y_val)
         # y_pred = fitted_model.predict(self.X_test_pad)
         # Returning the accuracy score of the model on the test sets
+<<<<<<< HEAD
         accuracy_score = self.history.evaluate(self.X_val_pad, self.y_val)
         self.mlflow_log_param('model', 'Bidirectional-LSTM')
         self.mlflow_log_metric('accuracy', accuracy_score[1])
         return accuracy_score[1]
+=======
+        accuracy_score = self.model.score(self.X_val, self.y_val)
+        self.mlflow_log_param('model' , 'Bidirectional-LSTM')
+        self.mlflow_log_metric('accuracy' ,accuracy_score)
+        print(accuracy_score)
+        return accuracy_score
+>>>>>>> 4c9944d5a6bff4d2a821307e3d44fff3b4f47bc1
 
     def save_model(self):
         joblib.dump(self.history, 'model.joblib')
@@ -169,15 +233,6 @@ class Trainer(object):
     def mlflow_log_metric(self, key, value):
         self.mlflow_client.log_metric(self.mlflow_run.info.run_id, key, value)
 
-    # def train(X_train_pad, y_train):
-    #     model = init_model()
-    #     es = EarlyStopping(patience=5, restore_best_weights=True)
-    #     fitted_model = model.fit(X_train_pad, y_train,
-    #                              batch_size=16,
-    #                              epochs=5, validation_split=0.1,
-    #                              callbacks=[es])
-
-    #     return fitted_model
 
     # Attach ML flow
 

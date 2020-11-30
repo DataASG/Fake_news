@@ -10,3 +10,4 @@ groupama/data/base_pno.*
 /raw_data/
 .DS_Store
 .idea/
+/Fake_news/raw_data/
