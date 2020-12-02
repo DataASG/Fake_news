@@ -19,25 +19,17 @@ from Fake_news.trainer import Trainer
 
 
 if __name__ == '__main__':
-    # Step 0 ---> Set params
-    # Step 1 ---> Get Data
     print('getting data')
-    df = get_data(local=False, sample_size=1)
-    y = df.pop('label')
-    # Step 2 ---> Clean Data
-    print('cleaning_data')
-    X = cleaned_data(df)
-    del df
-    # Step 2 1/2 ---> Split the model in X and y
-    # Step 3 ---> Calling the trainer class
+    X, y  = get_data(local=False, sample_size=1)
     print('calling trainer Class')
     t = Trainer(X=X, y=y)
-    del X,y
     print('starting to train model')
     t.train()
     print('finished training, evaluating model')
-    t.evaluate()
-    print('Saving the model')
+    t.save_model()
+    print('saved')
+    # t.evaluate()
+    # print('Saving the model')
     # Save the model
 
 

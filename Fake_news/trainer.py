@@ -1,21 +1,28 @@
 from Fake_news.data import get_data
+from Fake_news.encoders import TokenizerTransformer, PadSequencesTransformer
+from Fake_news.gcp import storage_upload
 
-import tensorflow as tf
+import os
+import pickle
+import joblib
 import numpy as np
-import mlflow
-from  mlflow.tracking import MlflowClient
-from gensim.models import Word2Vec
+import pandas as pd
+import gensim.downloader as api
 
-from sklearn.model_selection import train_test_split
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.layers import Bidirectional
-from tensorflow.keras import layers
+from tensorflow import keras
+from tensorflow.keras.models import load_model
+from sklearn.pipeline import Pipeline
+from gensim.models import KeyedVectors
+from Fake_news.clean import cleaned_data
+from tensorflow.keras.layers import LSTM
+from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Embedding
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.layers import Bidirectional
-from tensorflow.keras.layers import LSTM
-from tensorflow.keras.callbacks import EarlyStopping
+from sklearn.model_selection import train_test_split
+
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.wrappers.scikit_learn import KerasRegressor
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 from memoized_property import memoized_property
 # Mlflow wagon server
 MLFLOW_URI = "https://mlflow.lewagon.co/"
@@ -32,114 +39,71 @@ class Trainer(object):
     EXPERIMENT_NAME = 'fake_news_model'
 
     def __init__(self, X, y, **kwargs):
-        self.X_df = X
-        self.y_df = y
+        self.X = X
+        self.y = y
         self.kwargs = kwargs
-        self.batch_size = kwargs.get("batch_size", 16)
-        self.epochs = kwargs.get('epochs', 50)
+        self.batch_size = kwargs.get("batch_size", 128)
+        self.epochs = kwargs.get('epochs', 20)
         self.validation_split = kwargs.get('validation_split', 0.2)
-        self.patience= kwargs.get('patience', 10)
+        self.patience= kwargs.get('patience', 5)
         self.verbose = kwargs.get('verbose', 0)
         self.test_size=kwargs.get('test_size', 0.3)
         self.mlflow = kwargs.get("mlflow", False)  # if True log info to nlflow
         self.upload = kwargs.get("upload", False)  # if True log info to nlflow
         self.experiment_name =  'fake_news_model-1.1'
+        self.vocab_size = 400001
+        self.embedding_dim = 50
         self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(
-                 self.X_df, self.y_df, random_state=3, test_size=self.test_size)
+                 self.X, self.y, random_state=3, test_size=self.test_size)
+        self.longest_text = self.X_train.str.split().str.len().max()
 
 
-    # def embed_sentence(self, word2vec, sentence):
-    #     embedded_sentence = []
-    #     for word in sentence:
-    #         if word in word2vec.wv:
-    #             embedded_sentence.append(word2vec.wv[word])
-    #     return np.array(embedded_sentence)
+    def set_embedding(self):
+        info = api.info()  # show info about available models/datasets
+        self.model = api.load("glove-wiki-gigaword-50")
+
+        self.embedding_weights = np.vstack([
+           np.zeros(self.model.vectors.shape[1]),
+           self.model.vectors
+           ])
 
 
-    # def embedding(self, word2vec, sentences):
-    #     embed = []
-    #     for sentence in sentences:
-    #         embedded_sentence = embed_sentence(word2vec, sentence)
-    #         embed.append(embedded_sentence)
-    #     return embed
+    def create_model(self, embedding_input_dim, embedding_output_dim, embedding_weights):
+        model = Sequential([
+            Embedding(input_dim=embedding_input_dim,
+                      output_dim=embedding_output_dim,
+                      weights=[embedding_weights],
+                      trainable=False,
+                      mask_zero=True),
+            LSTM(128),
+            Dense(1, activation='sigmoid')
+        ])
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        return model
 
+    def set_pipeline(self):
+        my_tokenizer = TokenizerTransformer()
+        my_padder = PadSequencesTransformer(maxlen=self.longest_text)
+        my_model = keras.wrappers.scikit_learn.KerasClassifier(
+               build_fn=self.create_model,
+               epochs=self.epochs,
+               batch_size=self.batch_size,
+               embedding_input_dim=self.vocab_size,
+               embedding_output_dim=self.embedding_dim,
+               embedding_weights=self.embedding_weights)
 
-    # def embedding_pipeline(self, word2vec, X):
-    #     X = embedding(word2vec, X)
-    #     X = pad_sequences(X, dtype='float32', padding='post')
-    #     return X
-
-
-    # def word_2_vec(self, X_train, X_test):
-
-
-    #     return X_train_pad, X_test_pad
-
-
-
-    # def init_model():
-    #     model = Sequential()
-    #     model.add(layers.Masking())
-    #     model.add(Bidirectional(LSTM(256)))
-    #     model.add(Dense(128, activation='tanh'))
-    #     model.add(Dense(1, activation='sigmoid'))
-    #     model.compile(optimizer='rmsprop',
-    #                   loss='binary_crossentropy', metrics=['accuracy'])
-    #     return model
-
+        self.pipeline = Pipeline([
+              ('tokenizer', my_tokenizer),
+              ('padder', my_padder),
+              ('model', my_model)
+              ])
 
 
     def train(self):
-        def embed_sentence(word2vec, sentence):
-            embedded_sentence = []
-            for word in sentence:
-                if word in word2vec.wv:
-                    embedded_sentence.append(word2vec.wv[word])
-            return np.array(embedded_sentence)
+        self.set_embedding()
+        self.set_pipeline()
+        self.pipeline.fit(self.X, self.y)
 
-        def embedding(word2vec, sentences):
-            embed = []
-            for sentence in sentences:
-                embedded_sentence = embed_sentence(word2vec, sentence)
-                embed.append(embedded_sentence)
-            return embed
-
-        def embedding_pipeline(word2vec, X):
-            X = embedding(word2vec, X)
-            X = pad_sequences(X, dtype='float32', padding='post')
-            return X
-
-        def init_model():
-            model = Sequential()
-            model.add(layers.Masking())
-            model.add(Bidirectional(LSTM(256)))
-            model.add(Dense(128, activation='tanh'))
-            model.add(Dense(1, activation='sigmoid'))
-            model.compile(optimizer='adam', #was rmsprop
-                          loss='binary_crossentropy', metrics=['accuracy'])
-            return model
-        #Embedding and vectorising X_train and X_val
-        word2vec = Word2Vec(sentences=self.X_train, size=60, min_count=10, window=10)
-        self.X_train_pad = embedding_pipeline(word2vec, self.X_train)
-        self.X_val_pad = embedding_pipeline(word2vec, self.X_val)
-        # X_train_pad, self.X_val_pad = word_2_vec(self.X_train, self.X_val)
-        #initialising the model and the EarlyStopping
-        # strategy = tf.distribute.MirroredStrategy()
-
-        # Open a strategy scope.
-        # with strategy.scope():
-            # Everything that creates variables should be under the strategy scope.
-            # In general this is only model construction & `compile()`.
-        self.model = init_model()
-        es = EarlyStopping(patience=self.patience, restore_best_weights=True)
-        #fitting the model to X_train
-        print('starting to train')
-        self.history = self.model.fit(self.X_train_pad, self.y_train,
-                                    batch_size=self.batch_size,
-                                    epochs=self.epochs,
-                                    validation_split=self.validation_split,
-                                    verbose=self.verbose,
-                                    callbacks=[es])
 
 
 
@@ -147,14 +111,17 @@ class Trainer(object):
         # compute_score(self.X_val, self.y_val)
         # y_pred = fitted_model.predict(self.X_test_pad)
         # Returning the accuracy score of the model on the test sets
-        accuracy_score = self.model.evaluate(self.X_val_pad, self.y_val)
+        accuracy_score = self.pipeline.named_steps['model'].model.evaluate(self.X_val, self.y_val)
         self.mlflow_log_param('model' , 'Bidirectional-LSTM')
         self.mlflow_log_metric('accuracy' ,accuracy_score[1])
         return accuracy_score[1]
 
     def save_model(self):
-        joblib.dump(self.history, 'model.joblib')
-        print(colored("model.joblib saved locally", "green"))
+        self.pipeline.named_steps['model'].model.save('lstm.h5')
+        self.pipeline.named_steps['model'].model = None
+        joblib.dump(self.pipeline, 'pipeline.pkl')
+        storage_upload(filename='pipeline.pkl')
+        storage_upload(filename='lstm.h5')
     # def compute_score(self, X_val, y_val):
     #     y_pred = self.history.predict(X_val)#
     #     return y_pred

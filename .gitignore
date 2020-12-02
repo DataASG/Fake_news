@@ -11,3 +11,5 @@ groupama/data/base_pno.*
 .DS_Store
 .idea/
 /Fake_news/raw_data/
+*.h5
+*.pkl
