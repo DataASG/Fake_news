@@ -21,7 +21,7 @@ def get_credentials():
     creds_gcp = service_account.Credentials.from_service_account_info(creds_json)
     return creds_gcp
 
-def storage_upload(model_version=1, bucket=BUCKET_NAME, rm=False, filename='pipeline.pkl'):
+def storage_upload(model_version=10.22, bucket=BUCKET_NAME, rm=False, filename='pipeline.pkl'):
     client = storage.Client().bucket(bucket)
 
     storage_location = 'models/{}/versions/{}/{}'.format(

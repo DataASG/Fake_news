@@ -5,11 +5,13 @@ from google.cloud import storage
 
 def get_data(local=False, sample_size=1, nrows=None):
     if local:
-        path = 'raw_data/data.csv'
+        path = '../raw_data/data.csv'
     else:
         path = 'gs://fakenews475/data/data.csv'
 
     df = pd.read_csv(path, nrows=nrows)
+    mask = (df['text'].str.len() < 2000)
+    df = df.loc[mask]
     df = df.drop(columns=('Unnamed: 0'))
     df = df.drop(columns=('title'))
     # df_sample = df.sample(frac=sample_size, random_state=3)

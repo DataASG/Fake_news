@@ -53,6 +53,24 @@ def cleaned_data(df_sample):
 
     return df_sample_text_list
 
+def embed_sentence(word2vec, sentence):
+            embedded_sentence = []
+            for word in sentence:
+                if word in word2vec.wv:
+                    embedded_sentence.append(word2vec.wv[word])
+            return np.array(embedded_sentence)
+
+        def embedding(word2vec, sentences):
+            embed = []
+            for sentence in sentences:
+                embedded_sentence = embed_sentence(word2vec, sentence)
+                embed.append(embedded_sentence)
+            return embed
+
+        def embedding_pipeline(word2vec, X):
+            X = embedding(word2vec, X)
+            X = pad_sequences(X, dtype='float32', padding='post')
+            return X
 # Model Ini
 
 

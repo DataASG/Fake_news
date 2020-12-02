@@ -1,5 +1,4 @@
 from Fake_news.data import get_data
-from Fake_news.clean import cleaned_data
 from Fake_news.trainer import Trainer
 
 

@@ -70,7 +70,7 @@ PYTHON_VERSION=3.7
 PACKAGE_NAME=Fake_news
 FILENAME=main
 RUNTIME_VERSION=2.1
-JOB_NAME=fake_news_training_pipeline_no_gpu_$(shell date +'%Y%m%d_%H%M%S')
+JOB_NAME=fake_news_training_pipeline_2k_validation_1_layer$(shell date +'%Y%m%d_%H%M%S')
 ##### Machine Type - - - - - - - - - - - - - - - - - - - - - - - - -
 MACHINE_TYPE=n1-highmem-96  #complex_model_l_gpu old
 
@@ -89,3 +89,5 @@ gcp_submit_training:
 
 run_locally:
 	@python -m ${PACKAGE_NAME}.${FILENAME}
+
+

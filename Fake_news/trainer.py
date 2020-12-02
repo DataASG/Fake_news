@@ -13,13 +13,13 @@ from tensorflow import keras
 from tensorflow.keras.models import load_model
 from sklearn.pipeline import Pipeline
 from gensim.models import KeyedVectors
-from Fake_news.clean import cleaned_data
 from tensorflow.keras.layers import LSTM
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Embedding
 from tensorflow.keras.models import Sequential
 from sklearn.model_selection import train_test_split
 
+from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.wrappers.scikit_learn import KerasRegressor
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -42,12 +42,12 @@ class Trainer(object):
         self.X = X
         self.y = y
         self.kwargs = kwargs
-        self.batch_size = kwargs.get("batch_size", 128)
+        self.batch_size = kwargs.get("batch_size", 32)
         self.epochs = kwargs.get('epochs', 20)
         self.validation_split = kwargs.get('validation_split', 0.2)
-        self.patience= kwargs.get('patience', 5)
+        self.patience= kwargs.get('patience', 3)
         self.verbose = kwargs.get('verbose', 0)
-        self.test_size=kwargs.get('test_size', 0.3)
+        self.test_size=kwargs.get('test_size', 0.2)
         self.mlflow = kwargs.get("mlflow", False)  # if True log info to nlflow
         self.upload = kwargs.get("upload", False)  # if True log info to nlflow
         self.experiment_name =  'fake_news_model-1.1'
@@ -75,7 +75,8 @@ class Trainer(object):
                       weights=[embedding_weights],
                       trainable=False,
                       mask_zero=True),
-            LSTM(128),
+            LSTM(256),
+            Dense(128)
             Dense(1, activation='sigmoid')
         ])
         model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -84,13 +85,16 @@ class Trainer(object):
     def set_pipeline(self):
         my_tokenizer = TokenizerTransformer()
         my_padder = PadSequencesTransformer(maxlen=self.longest_text)
+        es = EarlyStopping(monitor="val_loss", min_delta=0, patience=3, verbose=0, mode="auto", restore_best_weights=True)
         my_model = keras.wrappers.scikit_learn.KerasClassifier(
                build_fn=self.create_model,
                epochs=self.epochs,
                batch_size=self.batch_size,
                embedding_input_dim=self.vocab_size,
                embedding_output_dim=self.embedding_dim,
-               embedding_weights=self.embedding_weights)
+               embedding_weights=self.embedding_weights,
+               validation_split=self.validation_split,
+               callbacks=[es])
 
         self.pipeline = Pipeline([
               ('tokenizer', my_tokenizer),
@@ -102,7 +106,7 @@ class Trainer(object):
     def train(self):
         self.set_embedding()
         self.set_pipeline()
-        self.pipeline.fit(self.X, self.y)
+        self.pipeline.fit(self.X, self.y, )
 
 
 
@@ -125,6 +129,12 @@ class Trainer(object):
     # def compute_score(self, X_val, y_val):
     #     y_pred = self.history.predict(X_val)#
     #     return y_pred
+
+    def predict(self, X_test):
+        pipeline = joblib.load('pipeline.pkl')
+        pipeline.named_steps['model'].model = load_model('lstm.h5')
+        return pipeline.predict(X_test)
+
 
     @memoized_property
     def mlflow_client(self):
@@ -155,20 +165,4 @@ class Trainer(object):
     #                              batch_size=16,
     #                              epochs=5, validation_split=0.1,
     #                              callbacks=[es])
-
-    #     return fitted_model
-
-
-
-
-
-
-    # Attach ML flow
-
-
-# def evaluate(X_test_pad, y_test, model):
-#     evaluate = model.evaluate(X_test_pad, y_test)
-#     return evaluate
-    # Attach ML flow
-
 
