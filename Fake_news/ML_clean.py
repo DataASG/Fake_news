@@ -13,7 +13,7 @@ nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
 
-# Preprocessing
+import pandas as pd
 
 
 def clean_func(text):
@@ -32,21 +32,6 @@ def clean_func(text):
     return lemmatized
 
 
-def cleaned_data(df_sample):
-    df_sample_text = df_sample['text'].apply(lambda text: clean_func(text))
-    df_sample_title = df_sample['title'].apply(lambda text: clean_func(text))
-
-    df_sample_text_joined = df_sample_text.apply(lambda x: " ".join(x))
-    df_sample_title_joined = df_sample_title.apply(lambda x: " ".join(x))
-
-    X = pd.concat([df_sample_title_joined, df_sample_text_joined], axis=1)
-    total_text = X['title'] + ' ' + X['text']
-
-    df_sample_text_list = total_text.to_list()
-
-    return df_sample_text_list
-
-
 def cleaned_data_ml(df_sample):
     df_sample_text = df_sample['text'].apply(lambda text: clean_func(text))
     df_sample_title = df_sample['title'].apply(lambda text: clean_func(text))
@@ -56,8 +41,8 @@ def cleaned_data_ml(df_sample):
 
     tfidf_vec = TfidfVectorizer(max_features=10000, ngram_range=(1, 3))
 
-    df_text = tfidf_vec.fit_transform(df_sample_text_joined).to_array()
-    df_title = tfidf_vec.fit_transform(df_sample_title_joined).to_array()
+    df_text = tfidf_vec.fit_transform(df_sample_text_joined).toarray()
+    df_title = tfidf_vec.fit_transform(df_sample_title_joined).toarray()
 
     X_tfidf = np.hstack((df_title, df_text))
 
