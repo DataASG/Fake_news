@@ -42,7 +42,7 @@ def set_model():
 pipeline = set_model()
 st.title('Fight against Fake News - The 2020 Fake News Detector')
 image_fakenews = Image.open('Fake_news/data/fact.jpg')
-image_predict_fake_news = Image.open('Fake_news/data/fake_news_image.jpg')
+image_predict_fake_news = Image.open('Fake_news/data/fake_news_2.jpg')
 image_predict_real_news = Image.open('Fake_news/data/good_news.jpg')
 # width=300)#use_column_width=True)
 add_image_fake_news = st.image(image_fakenews, use_column_width=True)
